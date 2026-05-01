@@ -58,7 +58,7 @@ const allowedOrigins = [
 "https://paulandhella.com",
 "https://www.paulandhella.com",
 "https://api.inviteyours.com" ,
-"https://Drtolosagudina.inviteyours.com"
+"https://drtolosagudina.inviteyours.com"
 
               // local dev
 ];

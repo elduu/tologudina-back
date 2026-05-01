@@ -15,7 +15,7 @@ const streamifier = require("streamifier");
 // ENV
 // =========================
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 const BOT_TOKEN = process.env.BOT_TOKEN;
 
 // =========================
@@ -217,7 +217,7 @@ app.get("/api/wedding-photos", async (req, res) => {
     const [rows] =
       await pool.execute(`
         SELECT image_url, sender, timestamp
-        FROM wedding_photos2
+        FROM wedding_photos3
         ORDER BY timestamp DESC
       `);
 

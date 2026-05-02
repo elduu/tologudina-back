@@ -58,7 +58,8 @@ const allowedOrigins = [
 "https://paulandhella.com",
 "https://www.paulandhella.com",
 "https://api.inviteyours.com" ,
-"https://drtolosagudina.inviteyours.com"
+"https://drtolosagudina.inviteyours.com",
+"https://rsvp.inviteyours.com"
 
               // local dev
 ];
@@ -296,7 +297,19 @@ app.get("/api/wedding-photos", async (req, res) => {
 
 app.use(async (req, res, next) => {
   try {
-    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const origin = req.headers.origin;
+
+    // ONLY count this domain
+    const allowedSite = "https://drtolosagudina.inviteyours.com";
+
+    if (origin !== allowedSite) {
+      return next(); // ignore everything else
+    }
+
+    const ip =
+      req.headers["x-forwarded-for"] ||
+      req.socket.remoteAddress;
+
     const userAgent = req.headers["user-agent"];
 
     await pool.execute(

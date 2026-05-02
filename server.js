@@ -104,6 +104,15 @@ async function initDatabase() {
       timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  
+  await pool.execute(`
+  CREATE TABLE IF NOT EXISTS visitors (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip VARCHAR(255),
+    user_agent TEXT,
+    visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
   console.log("Database Ready");
 
@@ -209,7 +218,53 @@ app.get("/api/rsvp", async (req, res) => {
 // =========================
 // Photo API
 // =========================
+app.get("/api/admin/rsvps", async (req, res) => {
+  try {
+    const [rows] = await pool.execute(`
+      SELECT 
+        name,
+        attending,
+        wish,
+        created_at
+      FROM rsvps3
+      ORDER BY created_at DESC
+    `);
 
+    const formatted = rows.map(r => ({
+      name: r.name,
+      attending:
+        r.attending === 1 ? "Yes" :
+        r.attending === 0 ? "No" : "Not specified",
+      wish: r.wish,
+      created_at: r.created_at
+    }));
+
+    res.json({
+      total: formatted.length,
+      data: formatted
+    });
+
+  } catch (err) {
+    console.error("Admin RSVP Error:", err);
+    res.status(500).json({ message: "Database error" });
+  }
+});
+
+app.get("/api/admin/unique-visitors", async (req, res) => {
+  try {
+    const [rows] = await pool.execute(`
+      SELECT COUNT(DISTINCT ip) as total FROM visitors
+    `);
+
+    res.json({
+      unique_visitors: rows[0].total
+    });
+
+  } catch (err) {
+    console.error("Unique visitor error:", err);
+    res.status(500).json({ message: "Database error" });
+  }
+});
 app.get("/api/wedding-photos", async (req, res) => {
 
   try {
@@ -237,6 +292,26 @@ app.get("/api/wedding-photos", async (req, res) => {
 
   }
 
+});
+
+app.use(async (req, res, next) => {
+  try {
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const userAgent = req.headers["user-agent"];
+
+    await pool.execute(
+      `
+      INSERT INTO visitors (ip, user_agent)
+      VALUES (?, ?)
+      `,
+      [ip, userAgent]
+    );
+
+  } catch (err) {
+    console.error("Visitor log error:", err);
+  }
+
+  next();
 });
 
 // =========================
